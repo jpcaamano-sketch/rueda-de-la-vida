@@ -1,14 +1,10 @@
 import uuid
 from supabase import create_client, Client
-from core.config import SUPABASE_URL, SUPABASE_KEY
 
-_client: Client = None
 
 def get_db() -> Client:
-    global _client
-    if _client is None:
-        _client = create_client(SUPABASE_URL, SUPABASE_KEY)
-    return _client
+    from core.config import _get
+    return create_client(_get("SUPABASE_URL"), _get("SUPABASE_KEY"))
 
 
 # ─── Participantes ────────────────────────────────────────────────────────
