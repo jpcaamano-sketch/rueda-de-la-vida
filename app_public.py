@@ -212,6 +212,58 @@ with st.form("form_evaluacion"):
         use_container_width=True,
     )
 
+# ── JS: select-all al foco + auto-avance entre casillas ──────────────────
+import streamlit.components.v1 as components
+components.html("""
+<script>
+function getInputs() {
+    return Array.from(
+        window.parent.document.querySelectorAll(
+            '[data-testid="stForm"] [data-testid="stNumberInput"] input'
+        )
+    );
+}
+
+function setupInputs() {
+    var inputs = getInputs();
+    inputs.forEach(function(inp, i) {
+        if (inp._jpeReady) return;
+        inp._jpeReady = true;
+
+        // Seleccionar todo al entrar al campo
+        inp.addEventListener('focus', function() { this.select(); });
+
+        var timer = null;
+        inp.addEventListener('keyup', function(e) {
+            var v = parseInt(this.value);
+            if (isNaN(v) || v < 1 || v > 10) return;
+            clearTimeout(timer);
+
+            if (v === 10 || (v >= 2 && v <= 9)) {
+                // Avanzar de inmediato
+                var next = getInputs()[i + 1];
+                if (next) { next.focus(); next.select(); }
+            } else if (v === 1) {
+                // Esperar 500 ms por si viene el "0" (para hacer 10)
+                timer = setTimeout(function() {
+                    var next = getInputs()[i + 1];
+                    if (next) { next.focus(); next.select(); }
+                }, 500);
+            }
+        });
+    });
+}
+
+// Ejecutar ahora y re-ejecutar cuando Streamlit re-renderice
+setupInputs();
+setTimeout(setupInputs, 600);
+setTimeout(setupInputs, 1500);
+new MutationObserver(setupInputs).observe(
+    window.parent.document.body, { childList: true, subtree: true }
+);
+</script>
+""", height=0)
+
 # ── Procesar envío ────────────────────────────────────────────────────────
 if enviar:
     sin_responder = [c["nombre"] for c in comportamientos if respuestas.get(c["id"], 0) == 0]
